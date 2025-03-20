@@ -15,9 +15,11 @@ import (
 
 // Config structure
 type Config struct {
-	SymlinkDirs []string `json:"symlink_dirs"`
-	ZurgMount   string   `json:"zurg_mount"`
-	DryRun      bool     `json:"dry_run"`
+	SymlinkDirs   []string `json:"symlink_dirs"`
+	ZurgMount     string   `json:"zurg_mount"`
+	DryRun        bool     `json:"dry_run"`
+	EnableRemoval bool     `json:"enable_removal"`
+	EnableRepair  bool     `json:"enable_repair"`
 }
 
 var (
@@ -35,8 +37,10 @@ var defaultConfig = Config{
 		"/storage/symlinks/series/",
 		"/storage/symlinks/series-4k/",
 	},
-	ZurgMount: "/storage/realdebrid-zurg/__all__/",
-	DryRun:    true,
+	ZurgMount:     "/storage/realdebrid-zurg/__all__/",
+	DryRun:        true,
+	EnableRemoval: true,
+	EnableRepair:  true,
 }
 
 // Ensure log directory exists
@@ -79,32 +83,14 @@ func loadConfig(filename string) (*Config, error) {
 	if env := os.Getenv("DRY_RUN"); env != "" {
 		config.DryRun = env == "true"
 	}
-	if env := os.Getenv("SYMLINK_DIRS"); env != "" {
-		config.SymlinkDirs = strings.Split(env, ",")
+	if env := os.Getenv("ENABLE_REMOVAL"); env != "" {
+		config.EnableRemoval = env == "true"
+	}
+	if env := os.Getenv("ENABLE_REPAIR"); env != "" {
+		config.EnableRepair = env == "true"
 	}
 
 	return &config, nil
-}
-
-// API Handlers
-func getStatus(w http.ResponseWriter, r *http.Request) {
-	configMutex.Lock()
-	defer configMutex.Unlock()
-	log.Println("API request: /api/status")
-	json.NewEncoder(w).Encode(config)
-}
-
-func toggleDryRun(w http.ResponseWriter, r *http.Request) {
-	configMutex.Lock()
-	defer configMutex.Unlock()
-	config.DryRun = !config.DryRun
-	log.Printf("Dry run mode toggled: %v", config.DryRun)
-	json.NewEncoder(w).Encode(config)
-}
-
-func triggerCleanup(w http.ResponseWriter, r *http.Request) {
-	log.Println("API request: /api/cleanup")
-	w.Write([]byte("Cleanup and repair completed"))
 }
 
 func main() {
@@ -116,10 +102,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
-
-	http.HandleFunc("/api/status", getStatus)
-	http.HandleFunc("/api/toggle-dry-run", toggleDryRun)
-	http.HandleFunc("/api/cleanup", triggerCleanup)
 
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

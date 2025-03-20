@@ -8,5 +8,7 @@
     "/storage/symlinks/series-4k/"
   ],
   "zurg_mount": "/storage/realdebrid-zurg/__all__/",
-  "dry_run": true
+  "dry_run": true,
+  "enable_removal": true,
+  "enable_repair": true
 }
