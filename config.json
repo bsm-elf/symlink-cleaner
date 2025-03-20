@@ -1,0 +1,12 @@
+{
+  "symlink_dirs": [
+    "/storage/symlinks/anime_movies/",
+    "/storage/symlinks/anime_shows/",
+    "/storage/symlinks/movies/",
+    "/storage/symlinks/movies-4k/",
+    "/storage/symlinks/series/",
+    "/storage/symlinks/series-4k/"
+  ],
+  "zurg_mount": "/storage/realdebrid-zurg/__all__/",
+  "dry_run": true
+}
