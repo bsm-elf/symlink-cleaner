@@ -29,6 +29,7 @@ It’s particularly useful in setups where files in Zurg’s mount (e.g., `/stor
   - Lists Python packages: Flask, requests, Flask-SocketIO, schedule, python-environ.
 
 ## Settings
+
 Settings are fully configurable through the web UI, `config.json`, or environment variables:
 - **`zurg_host`**:
   - Description: URL of the Zurg WebDAV server.
@@ -44,6 +45,7 @@ Settings are fully configurable through the web UI, `config.json`, or environmen
   - Options:
     - `repair_only`: Repairs broken symlinks without removing unrepairable ones.
     - `repair_and_remove`: Repairs where possible, removes unrepairable symlinks, and notifies Arr instances.
+    - `repair_remove_and_clean`: Repairs, removes unrepairable symlinks, notifies Arr instances, and deletes spare files in the Zurg directory not referenced by any symlink.
   - Default: `repair_and_remove`.
 - **`scan_interval`**:
   - Description: Minutes between scheduled scans (0 to disable).
@@ -61,6 +63,7 @@ Settings are fully configurable through the web UI, `config.json`, or environmen
   - Format: `[{"name": "Sonarr", "host": "http://localhost:8989", "api_key": "your_key"}, ...]`.
 
 ## How to Use
+
 1. **Launch the App**: Start via Docker (see installation below) and visit `http://localhost:5000`.
 2. **Check Status**: The "Status" card shows Zurg’s availability (green for "Up," red for "Down"), updated live.
 3. **Configure Settings**:
@@ -74,12 +77,13 @@ Settings are fully configurable through the web UI, `config.json`, or environmen
 5. **Monitor Results**: The "Scan Results" card updates in real-time with:
    - **Repaired Symlinks**: Table of paths and new targets.
    - **Removed Symlinks**: Table of deleted paths.
+   - **Spare Files Cleaned**: Table of deleted spare files in the Zurg directory (only in `repair_remove_and_clean` mode).
    - **Valid Symlinks**: Count of intact links.
    - **Status**: Idle, Running, Complete, or Zurg Down.
 
 ### Example Usage
 - **Manual Scan**: Set `zurg_host` to `http://zurg:9999`, `symlink_dirs` to `/storage/symlinks/movies`, click "Run Scan," and see broken links repaired or removed.
-- **Scheduled Scan**: Set `scan_interval` to `1440` (daily), save, restart, and check results daily at `http://localhost:5000`.
+- **Scheduled Scan**: Set `scan_interval` to `1440` (daily), restart, and check results daily at `http://localhost:5000`.
 
 ## How to Install
 

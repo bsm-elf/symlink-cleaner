@@ -15,8 +15,8 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')  # Replace
 socketio = SocketIO(app, cors_allowed_origins="*")
 logger = logging.getLogger(__name__)
 
-# Global state for scan results
-scan_results = {"repaired": [], "removed": [], "valid": 0, "status": "idle"}
+# Global state for scan results and config
+scan_results = {"repaired": [], "removed": [], "valid": 0, "cleaned": [], "status": "idle"}
 config_global = {}
 
 # Load environment variables
@@ -33,7 +33,6 @@ def load_config(config_file):
     config['mode'] = env.str('MODE', config['mode'])
     config['log_level'] = env.str('LOG_LEVEL', config['log_level'])
     config['scan_interval'] = env.int('SCAN_INTERVAL', config.get('scan_interval', 0))  # 0 = no schedule
-    # Radarr/Sonarr remain in config.json for simplicity, but could be env vars if needed
     return config
 
 def check_zurg_status(zurg_host):
@@ -86,9 +85,38 @@ def notify_arr_instances(config, symlink_path):
         except requests.RequestException as e:
             logger.error(f"Failed to notify {sonarr['name']}: {e}")
 
+def clean_spare_files(config):
+    """Delete files in Zurg directory that aren't symlinked to."""
+    zurg_mount = config["zurg_mount"]
+    symlink_dirs = config["symlink_dirs"]
+    # Collect all targets referenced by symlinks
+    referenced_targets = set()
+    for dir_path in symlink_dirs:
+        for root, _, files in os.walk(dir_path):
+            for file in files:
+                symlink_path = os.path.join(root, file)
+                if os.path.islink(symlink_path):
+                    target = os.readlink(symlink_path)
+                    referenced_targets.add(os.path.abspath(target))
+
+    # Scan Zurg directory for files not referenced by any symlink
+    cleaned_files = []
+    for root, _, files in os.walk(zurg_mount):
+        for file in files:
+            file_path = os.path.join(root, file)
+            if os.path.abspath(file_path) not in referenced_targets:
+                try:
+                    os.remove(file_path)
+                    cleaned_files.append(file_path)
+                    logger.info(f"Deleted spare file: {file_path}")
+                except Exception as e:
+                    logger.error(f"Failed to delete spare file {file_path}: {e}")
+    
+    return cleaned_files
+
 def clean_symlinks(config):
     global scan_results
-    scan_results = {"repaired": [], "removed": [], "valid": 0, "status": "running"}
+    scan_results = {"repaired": [], "removed": [], "valid": 0, "cleaned": [], "status": "running"}
     socketio.emit('scan_update', scan_results)
     
     if not check_zurg_status(config["zurg_host"]):
@@ -106,16 +134,20 @@ def clean_symlinks(config):
                     repaired, new_target = repair_symlink(symlink_path, config["zurg_mount"])
                     if repaired and new_target != os.readlink(symlink_path):
                         scan_results["repaired"].append({"path": symlink_path, "new_target": new_target})
-                    elif not repaired and mode == "repair_and_remove":
+                    elif not repaired and mode in ["repair_and_remove", "repair_remove_and_clean"]:
                         os.remove(symlink_path)
                         notify_arr_instances(config, symlink_path)
                         scan_results["removed"].append(symlink_path)
                     else:
                         scan_results["valid"] += 1
                     socketio.emit('scan_update', scan_results)
-                    time.sleep(0.1)  # Simulate progress; remove for production
+    
+    # If mode is repair_remove_and_clean, delete spare files in Zurg directory
+    if mode == "repair_remove_and_clean":
+        scan_results["cleaned"] = clean_spare_files(config)
+    
     scan_results["status"] = "complete"
-    logger.info(f"Scan complete: {len(scan_results['repaired'])} repaired, {len(scan_results['removed'])} removed, {scan_results['valid']} valid")
+    logger.info(f"Scan complete: {len(scan_results['repaired'])} repaired, {len(scan_results['removed'])} removed, {scan_results['valid']} valid, {len(scan_results['cleaned'])} cleaned")
     socketio.emit('scan_update', scan_results)
 
 def run_scheduler(config_file):
@@ -127,10 +159,9 @@ def run_scheduler(config_file):
     while True:
         config = load_config(config_file)
         interval = config['scan_interval']
+        schedule.clear()  # Clear previous schedule
         if interval > 0:
             schedule.every(interval).minutes.do(job)
-        else:
-            schedule.clear()
         schedule.run_pending()
         time.sleep(60)  # Check config changes every minute
 
@@ -148,8 +179,8 @@ def config_endpoint():
             json.dump(request.json, f, indent=2)
         global config_global
         config_global = load_config(config_file)
-        return jsonify({"status": "saved"})
-    return jsonify(config_global)
+        return {"status": "saved"}
+    return config_global
 
 @socketio.on('start_scan')
 def handle_scan():

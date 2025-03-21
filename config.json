@@ -9,7 +9,7 @@
     "/storage/symlinks/series",
     "/storage/symlinks/series-4k"
   ],
-  "mode": "repair_and_remove",
+  "mode": "repair_and_remove",  // Can change to "repair_remove_and_clean"
   "scan_interval": 0,
   "log_level": "info",
   "radarr_instances": [
