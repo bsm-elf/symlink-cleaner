@@ -99,16 +99,15 @@ Settings are fully configurable through the web UI, `config.json`, or environmen
    - Or use env vars (see below).
 3. **Build and Run**:
    ```bash
-   docker build -t symlink-cleaner .
-docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 symlink-cleaner```
+   docker build -t symlink-cleaner .```
+   ```bash docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 symlink-cleaner```
    **With env vars:**
-   ```docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 \
-  -e ZURG_HOST=http://zurg:9999 -e SCAN_INTERVAL=60 -e LOG_LEVEL=debug symlink-cleaner```.
+   ```bashdocker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 \ -e ZURG_HOST=http://zurg:9999 -e SCAN_INTERVAL=60 -e LOG_LEVEL=debug symlink-cleaner```.
 4. **Verify**: Open `http://localhost:5000`.
 
 ## Environment Variables
 
-| Variable         | Description                            | Example Value                  | Default (from `config.json`) |
+```| Variable         | Description                            | Example Value                  | Default (from `config.json`) |
 |-------------------|----------------------------------------|--------------------------------|------------------------------|
 | `ZURG_HOST`      | Zurg WebDAV URL                       | `http://zurg:9999`            | `http://localhost:9999`      |
 | `ZURG_MOUNT`     | Zurg mount path                       | `/mnt/zurg/__all__`           | `/storage/realdebrid-zurg/__all__` |
@@ -116,7 +115,7 @@ docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 s
 | `MODE`           | Operation mode                        | `repair_and_remove`           | `repair_and_remove`          |
 | `SCAN_INTERVAL`  | Minutes between scans (0 to disable)  | `30`                          | `0`                          |
 | `LOG_LEVEL`      | Logging verbosity                     | `debug`                       | `info`                       |
-| `SECRET_KEY`     | Flask secret key (security)           | `random_string_123`           | `your-secret-key`            |
+| `SECRET_KEY`     | Flask secret key (security)           | `random_string_123`           | `your-secret-key`            |```
 
 **Note**: `radarr_instances` and `sonarr_instances` are configured via UI or `config.json` only due to their list structure.
 
