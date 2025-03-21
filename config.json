@@ -10,6 +10,7 @@
     "/storage/symlinks/series-4k"
   ],
   "mode": "repair_and_remove",
+  "scan_interval": 0,
   "log_level": "info",
   "radarr_instances": [
     {"name": "Radarr", "host": "http://localhost:7878", "api_key": "your_radarr_api_key"},

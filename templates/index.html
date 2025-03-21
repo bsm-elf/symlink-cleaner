@@ -1,74 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Symlink Cleaner</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .status { font-weight: bold; }
-    .status.up { color: green; }
-    .status.down { color: red; }
-    .section { margin: 20px 0; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    button { padding: 10px; margin: 5px; }
+    .status-up { color: #28a745; }
+    .status-down { color: #dc3545; }
+    .card { margin-bottom: 20px; }
+    .table { font-size: 0.9rem; }
   </style>
 </head>
 <body>
-  <h1>Symlink Cleaner Dashboard</h1>
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1">Symlink Cleaner</span>
+    </div>
+  </nav>
 
-  <div class="section">
-    <h2>Status</h2>
-    <p>Zurg: <span class="status {{ 'up' if zurg_status == 'Up' else 'down' }}">{{ zurg_status }}</span></p>
-  </div>
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">Status</div>
+          <div class="card-body">
+            <p>Zurg: <span id="zurgStatus" class="status-{{ 'up' if initial_status == 'Up' else 'down' }}">{{ initial_status }}</span></p>
+          </div>
+        </div>
 
-  <div class="section">
-    <h2>Configuration</h2>
-    <form id="configForm">
-      <label>Zurg Host: <input type="text" name="zurg_host" required></label><br>
-      <label>Zurg Mount: <input type="text" name="zurg_mount" required></label><br>
-      <label>Symlink Dirs (comma-separated): <input type="text" name="symlink_dirs" required></label><br>
-      <label>Mode: 
-        <select name="mode">
-          <option value="repair_only">Repair Only</option>
-          <option value="repair_and_remove">Repair and Remove</option>
-        </select>
-      </label><br>
-      <h3>Radarr Instances</h3>
-      <div id="radarrFields"></div>
-      <button type="button" onclick="addInstance('radarr')">Add Radarr</button><br>
-      <h3>Sonarr Instances</h3>
-      <div id="sonarrFields"></div>
-      <button type="button" onclick="addInstance('sonarr')">Add Sonarr</button><br>
-      <button type="submit">Save Config</button>
-    </form>
-  </div>
+        <div class="card">
+          <div class="card-header">Actions</div>
+          <div class="card-body">
+            <button class="btn btn-primary" onclick="startScan()">Run Scan</button>
+          </div>
+        </div>
+      </div>
 
-  <div class="section">
-    <h2>Actions</h2>
-    <button onclick="startScan()">Run Scan</button>
-  </div>
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">Configuration</div>
+          <div class="card-body">
+            <form id="configForm">
+              <div class="mb-3">
+                <label class="form-label">Zurg Host</label>
+                <input type="text" class="form-control" name="zurg_host" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Zurg Mount</label>
+                <input type="text" class="form-control" name="zurg_mount" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Symlink Dirs (comma-separated)</label>
+                <input type="text" class="form-control" name="symlink_dirs" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Mode</label>
+                <select class="form-select" name="mode">
+                  <option value="repair_only">Repair Only</option>
+                  <option value="repair_and_remove">Repair and Remove</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Scan Interval (minutes, 0 to disable)</label>
+                <input type="number" class="form-control" name="scan_interval" min="0" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Log Level</label>
+                <select class="form-select" name="log_level">
+                  <option value="debug">Debug</option>
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="error">Error</option>
+                </select>
+              </div>
+              <h5>Radarr Instances</h5>
+              <div id="radarrFields" class="mb-3"></div>
+              <button type="button" class="btn btn-secondary mb-3" onclick="addInstance('radarr')">Add Radarr</button>
+              <h5>Sonarr Instances</h5>
+              <div id="sonarrFields" class="mb-3"></div>
+              <button type="button" class="btn btn-secondary mb-3" onclick="addInstance('sonarr')">Add Sonarr</button>
+              <button type="submit" class="btn btn-success">Save Config</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="section">
-    <h2>Scan Results</h2>
-    <div id="results">
-      <p>Repaired Symlinks: <span id="repairedCount">0</span></p>
-      <table id="repairedTable"><tr><th>Path</th><th>New Target</th></tr></table>
-      <p>Removed Symlinks: <span id="removedCount">0</span></p>
-      <table id="removedTable"><tr><th>Path</th></tr></table>
-      <p>Valid Symlinks: <span id="validCount">0</span></p>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">Scan Results</div>
+          <div class="card-body">
+            <p>Repaired Symlinks: <span id="repairedCount">0</span></p>
+            <table class="table table-striped">
+              <thead><tr><th>Path</th><th>New Target</th></tr></thead>
+              <tbody id="repairedTable"></tbody>
+            </table>
+            <p>Removed Symlinks: <span id="removedCount">0</span></p>
+            <table class="table table-striped">
+              <thead><tr><th>Path</th></tr></thead>
+              <tbody id="removedTable"></tbody>
+            </table>
+            <p>Valid Symlinks: <span id="validCount">0</span></p>
+            <p id="scanStatus">Status: Idle</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
   <script>
+    const socket = io();
+
     function addInstance(type) {
       const container = document.getElementById(`${type}Fields`);
       const div = document.createElement('div');
+      div.className = 'input-group mb-2';
       div.innerHTML = `
-        <label>Name: <input type="text" name="${type}_name[]" required></label>
-        <label>Host: <input type="text" name="${type}_host[]" required></label>
-        <label>API Key: <input type="text" name="${type}_api_key[]" required></label>
-        <button type="button" onclick="this.parentElement.remove()">Remove</button><br>
+        <input type="text" class="form-control" name="${type}_name[]" placeholder="Name" required>
+        <input type="text" class="form-control" name="${type}_host[]" placeholder="Host" required>
+        <input type="text" class="form-control" name="${type}_api_key[]" placeholder="API Key" required>
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
       `;
       container.appendChild(div);
     }
@@ -78,17 +133,18 @@
       document.querySelector('[name="zurg_mount"]').value = data.zurg_mount;
       document.querySelector('[name="symlink_dirs"]').value = data.symlink_dirs.join(', ');
       document.querySelector('[name="mode"]').value = data.mode;
-      
+      document.querySelector('[name="scan_interval"]').value = data.scan_interval;
+      document.querySelector('[name="log_level"]').value = data.log_level;
       data.radarr_instances.forEach(inst => {
         addInstance('radarr');
-        const fields = document.querySelectorAll('#radarrFields div:last-child input');
+        const fields = document.querySelectorAll('#radarrFields .input-group:last-child input');
         fields[0].value = inst.name;
         fields[1].value = inst.host;
         fields[2].value = inst.api_key;
       });
       data.sonarr_instances.forEach(inst => {
         addInstance('sonarr');
-        const fields = document.querySelectorAll('#sonarrFields div:last-child input');
+        const fields = document.querySelectorAll('#sonarrFields .input-group:last-child input');
         fields[0].value = inst.name;
         fields[1].value = inst.host;
         fields[2].value = inst.api_key;
@@ -103,6 +159,8 @@
         zurg_mount: formData.get('zurg_mount'),
         symlink_dirs: formData.get('symlink_dirs').split(',').map(s => s.trim()),
         mode: formData.get('mode'),
+        scan_interval: parseInt(formData.get('scan_interval')),
+        log_level: formData.get('log_level'),
         radarr_instances: [],
         sonarr_instances: []
       };
@@ -123,34 +181,35 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
       });
-      alert('Config saved!');
+      alert('Config saved! Restart the app to apply scheduling changes.');
     };
 
-    async function startScan() {
-      const response = await fetch('/scan', { method: 'POST' });
-      const results = await response.json();
-      if (results.status === 'zurg_down') {
-        document.getElementById('results').innerHTML = '<p>Zurg is down, scan aborted.</p>';
-        return;
-      }
-      document.getElementById('repairedCount').textContent = results.repaired.length;
-      const repairedTable = document.getElementById('repairedTable');
-      repairedTable.innerHTML = '<tr><th>Path</th><th>New Target</th></tr>';
-      results.repaired.forEach(r => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${r.path}</td><td>${r.new_target}</td>`;
-        repairedTable.appendChild(row);
-      });
-      document.getElementById('removedCount').textContent = results.removed.length;
-      const removedTable = document.getElementById('removedTable');
-      removedTable.innerHTML = '<tr><th>Path</th></tr>';
-      results.removed.forEach(r => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${r}</td>`;
-        removedTable.appendChild(row);
-      });
-      document.getElementById('validCount').textContent = results.valid;
+    function startScan() {
+      socket.emit('start_scan');
     }
+
+    socket.on('zurg_status', data => {
+      const statusEl = document.getElementById('zurgStatus');
+      statusEl.textContent = data.status;
+      statusEl.className = `status-${data.status === 'Up' ? 'up' : 'down'}`;
+    });
+
+    socket.on('scan_update', data => {
+      document.getElementById('repairedCount').textContent = data.repaired.length;
+      const repairedTable = document.getElementById('repairedTable');
+      repairedTable.innerHTML = '';
+      data.repaired.forEach(r => {
+        repairedTable.innerHTML += `<tr><td>${r.path}</td><td>${r.new_target}</td></tr>`;
+      });
+      document.getElementById('removedCount').textContent = data.removed.length;
+      const removedTable = document.getElementById('removedTable');
+      removedTable.innerHTML = '';
+      data.removed.forEach(r => {
+        removedTable.innerHTML += `<tr><td>${r}</td></tr>`;
+      });
+      document.getElementById('validCount').textContent = data.valid;
+      document.getElementById('scanStatus').textContent = `Status: ${data.status === 'zurg_down' ? 'Zurg Down' : data.status.charAt(0).toUpperCase() + data.status.slice(1)}`;
+    });
   </script>
 </body>
 </html>
