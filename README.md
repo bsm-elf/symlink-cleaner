@@ -14,7 +14,7 @@ Symlink Cleaner is a tool for managing symbolic links in a Zurg mount. It scans 
 ### Setup
 #### 1. Clone the Repository
 ```sh
-git clone https://github.com/YOUR_USERNAME/symlink-cleaner.git
+git clone https://github.com/bsm-elf/symlink-cleaner.git
 cd symlink-cleaner
 ```
 #### 2. Build and Run with Docker
