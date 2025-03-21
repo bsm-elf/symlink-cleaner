@@ -10,7 +10,8 @@ In media setups using Zurg, symlinks often break when files in the mount (e.g., 
 - Repairing symlinks to valid targets.
 - Removing dead links and syncing with Radarr/Sonarr (optional).
 - Removing "spare" files in Zurg which are not symlinked to anything (after repairs are attempted and optional).
-It’s particularly useful in setups where files in Zurg’s mount (e.g., `/storage/realdebrid-zurg/__all__`) are updated or replaced, breaking symlinks in directories like `/storage/symlinks/movies`. The app checks Zurg’s availability before scanning, repairs symlinks where possible, and cleans up dead links, optionally syncing changes with Radarr and Sonarr via API calls. Whether you’re running a home media server or a complex Dockerized setup, Symlink Cleaner keeps your library tidy and accessible.
+
+It’s particularly useful in setups where files in Zurg’s mount (e.g., `/storage/realdebrid-zurg/__all__`) are updated or replaced, breaking symlinks in directories like `/storage/symlinks/movies`. The app checks Zurg’s availability before scanning, repairs symlinks where possible, cleans up dead symlinks, optionally syncing changes with Radarr and Sonarr via API calls, and optionally removing excess files in Zurg which are not being used.
 
 ### Components
 - **Backend (`symlink_cleaner.py`)**:
