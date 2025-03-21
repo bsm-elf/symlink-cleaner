@@ -1,14 +1,22 @@
 {
+  "zurg_host": "http://localhost:9999",
+  "zurg_mount": "/storage/realdebrid-zurg/__all__",
   "symlink_dirs": [
-    "/storage/symlinks/anime_movies/",
-    "/storage/symlinks/anime_shows/",
-    "/storage/symlinks/movies/",
-    "/storage/symlinks/movies-4k/",
-    "/storage/symlinks/series/",
-    "/storage/symlinks/series-4k/"
+    "/storage/symlinks/anime_movies",
+    "/storage/symlinks/anime_shows",
+    "/storage/symlinks/movies",
+    "/storage/symlinks/movies-4k",
+    "/storage/symlinks/series",
+    "/storage/symlinks/series-4k"
   ],
-  "zurg_mount": "/storage/realdebrid-zurg/__all__/",
-  "dry_run": true,
-  "enable_removal": true,
-  "enable_repair": true
+  "mode": "repair_and_remove",
+  "log_level": "info",
+  "radarr_instances": [
+    {"name": "Radarr", "host": "http://localhost:7878", "api_key": "your_radarr_api_key"},
+    {"name": "Radarr4k", "host": "http://localhost:7879", "api_key": "your_radarr4k_api_key"}
+  ],
+  "sonarr_instances": [
+    {"name": "Sonarr", "host": "http://localhost:8989", "api_key": "your_sonarr_api_key"},
+    {"name": "Sonarr4k", "host": "http://localhost:8990", "api_key": "your_sonarr4k_api_key"}
+  ]
 }

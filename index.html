@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Symlink Cleaner</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .status { font-weight: bold; }
+    .status.up { color: green; }
+    .status.down { color: red; }
+    .section { margin: 20px 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    button { padding: 10px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Symlink Cleaner Dashboard</h1>
+
+  <div class="section">
+    <h2>Status</h2>
+    <p>Zurg: <span class="status {{ 'up' if zurg_status == 'Up' else 'down' }}">{{ zurg_status }}</span></p>
+  </div>
+
+  <div class="section">
+    <h2>Configuration</h2>
+    <form id="configForm">
+      <label>Zurg Host: <input type="text" name="zurg_host" required></label><br>
+      <label>Zurg Mount: <input type="text" name="zurg_mount" required></label><br>
+      <label>Symlink Dirs (comma-separated): <input type="text" name="symlink_dirs" required></label><br>
+      <label>Mode: 
+        <select name="mode">
+          <option value="repair_only">Repair Only</option>
+          <option value="repair_and_remove">Repair and Remove</option>
+        </select>
+      </label><br>
+      <h3>Radarr Instances</h3>
+      <div id="radarrFields"></div>
+      <button type="button" onclick="addInstance('radarr')">Add Radarr</button><br>
+      <h3>Sonarr Instances</h3>
+      <div id="sonarrFields"></div>
+      <button type="button" onclick="addInstance('sonarr')">Add Sonarr</button><br>
+      <button type="submit">Save Config</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Actions</h2>
+    <button onclick="startScan()">Run Scan</button>
+  </div>
+
+  <div class="section">
+    <h2>Scan Results</h2>
+    <div id="results">
+      <p>Repaired Symlinks: <span id="repairedCount">0</span></p>
+      <table id="repairedTable"><tr><th>Path</th><th>New Target</th></tr></table>
+      <p>Removed Symlinks: <span id="removedCount">0</span></p>
+      <table id="removedTable"><tr><th>Path</th></tr></table>
+      <p>Valid Symlinks: <span id="validCount">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    function addInstance(type) {
+      const container = document.getElementById(`${type}Fields`);
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <label>Name: <input type="text" name="${type}_name[]" required></label>
+        <label>Host: <input type="text" name="${type}_host[]" required></label>
+        <label>API Key: <input type="text" name="${type}_api_key[]" required></label>
+        <button type="button" onclick="this.parentElement.remove()">Remove</button><br>
+      `;
+      container.appendChild(div);
+    }
+
+    fetch('/config').then(r => r.json()).then(data => {
+      document.querySelector('[name="zurg_host"]').value = data.zurg_host;
+      document.querySelector('[name="zurg_mount"]').value = data.zurg_mount;
+      document.querySelector('[name="symlink_dirs"]').value = data.symlink_dirs.join(', ');
+      document.querySelector('[name="mode"]').value = data.mode;
+      
+      data.radarr_instances.forEach(inst => {
+        addInstance('radarr');
+        const fields = document.querySelectorAll('#radarrFields div:last-child input');
+        fields[0].value = inst.name;
+        fields[1].value = inst.host;
+        fields[2].value = inst.api_key;
+      });
+      data.sonarr_instances.forEach(inst => {
+        addInstance('sonarr');
+        const fields = document.querySelectorAll('#sonarrFields div:last-child input');
+        fields[0].value = inst.name;
+        fields[1].value = inst.host;
+        fields[2].value = inst.api_key;
+      });
+    });
+
+    document.getElementById('configForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const config = {
+        zurg_host: formData.get('zurg_host'),
+        zurg_mount: formData.get('zurg_mount'),
+        symlink_dirs: formData.get('symlink_dirs').split(',').map(s => s.trim()),
+        mode: formData.get('mode'),
+        radarr_instances: [],
+        sonarr_instances: []
+      };
+      const radarrNames = formData.getAll('radarr_name[]');
+      const radarrHosts = formData.getAll('radarr_host[]');
+      const radarrKeys = formData.getAll('radarr_api_key[]');
+      for (let i = 0; i < radarrNames.length; i++) {
+        config.radarr_instances.push({ name: radarrNames[i], host: radarrHosts[i], api_key: radarrKeys[i] });
+      }
+      const sonarrNames = formData.getAll('sonarr_name[]');
+      const sonarrHosts = formData.getAll('sonarr_host[]');
+      const sonarrKeys = formData.getAll('sonarr_api_key[]');
+      for (let i = 0; i < sonarrNames.length; i++) {
+        config.sonarr_instances.push({ name: sonarrNames[i], host: sonarrHosts[i], api_key: sonarrKeys[i] });
+      }
+      await fetch('/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      alert('Config saved!');
+    };
+
+    async function startScan() {
+      const response = await fetch('/scan', { method: 'POST' });
+      const results = await response.json();
+      if (results.status === 'zurg_down') {
+        document.getElementById('results').innerHTML = '<p>Zurg is down, scan aborted.</p>';
+        return;
+      }
+      document.getElementById('repairedCount').textContent = results.repaired.length;
+      const repairedTable = document.getElementById('repairedTable');
+      repairedTable.innerHTML = '<tr><th>Path</th><th>New Target</th></tr>';
+      results.repaired.forEach(r => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${r.path}</td><td>${r.new_target}</td>`;
+        repairedTable.appendChild(row);
+      });
+      document.getElementById('removedCount').textContent = results.removed.length;
+      const removedTable = document.getElementById('removedTable');
+      removedTable.innerHTML = '<tr><th>Path</th></tr>';
+      results.removed.forEach(r => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${r}</td>`;
+        removedTable.appendChild(row);
+      });
+      document.getElementById('validCount').textContent = results.valid;
+    }
+  </script>
+</body>
+</html>

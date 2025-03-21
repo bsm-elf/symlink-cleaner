@@ -1,38 +1,18 @@
 # Symlink Cleaner
 
-Symlink Cleaner is a tool for managing symbolic links in a Zurg mount. It scans symlink directories, identifies files that are no longer linked, and either removes them or repairs broken symlinks. It includes a **dashboard-style web UI** for monitoring and managing the cleanup process.
+Symlink Cleaner is a tool for managing symbolic links in a Zurg mount. It scans symlink directories, repairs broken symlinks by finding similar files in the original target directory, and removes unrepairable ones (optionally notifying Radarr/Sonarr instances). It includes a dashboard-style web UI for monitoring and configuration.
 
 ## Features
-- **Detects unlinked files** in Zurg and removes them.
-- **Repairs broken symlinks** by finding the correct file.
-- **Deletes irreparable symlinks** if no match is found.
-- **Dashboard UI** with filters, charts, and controls.
-- **Dry-run mode** to preview changes before execution.
-- **Dockerized setup** for easy deployment.
+- Checks Zurg WebDAV availability before scanning.
+- Repairs symlinks using the original target path (same extension).
+- Removes broken symlinks and notifies Radarr/Sonarr (configurable).
+- Web UI for status, config editing, and scan results.
+- Runs in Docker/Kubernetes.
 
-## Installation
-### Setup
-#### 1. Clone the Repository
-```sh
-git clone https://github.com/bsm-elf/symlink-cleaner.git
-cd symlink-cleaner
-```
-#### 2. Build and Run with Docker
-```sh
-docker-compose up --build
-```
-Once running, open your browser and go to `http://localhost:3000`.
-
-## Logs & Debugging
-- Backend logs: `logs/backend.log`
-- Frontend logs: `logs/frontend.log`
-
-## Environment Variables
-- `SYMLINK_DIRS`: Comma-separated list of directories to scan.
-- `ZURG_MOUNT`: Path to the Zurg mount directory.
-- `DRY_RUN`: `true` to preview deletions, `false` to execute.
-- `ENABLE_REMOVAL`: `true` to remove unlinked files, `false` to disable.
-- `ENABLE_REPAIR`: `true` to repair broken symlinks, `false` to disable.
-
-## License
-This project is licensed under the MIT License.
+## Setup
+1. Clone the repo: `git clone https://github.com/bsm-elf/symlink-cleaner.git`
+2. Update `config.json` with your Zurg host, mount, and Radarr/Sonarr details.
+3. Build and run:
+   ```bash
+   docker build -t symlink-cleaner .
+   docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 symlink-cleaner
