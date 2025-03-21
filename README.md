@@ -100,8 +100,8 @@ Settings are fully configurable through the web UI, `config.json`, or environmen
 3. **Build and Run**:
 
    ```bash
-   docker build -t symlink-cleaner .
-   docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 symlink-cleaner```
+   docker build -t symlink-cleaner .```
+   ```bash docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 symlink-cleaner```
 
    **With env vars:**
 
