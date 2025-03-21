@@ -1,5 +1,9 @@
 # Symlink Cleaner
 
+![Symlink Cleaner Logo](assets/symlink_cleaner_logo.png)
+
+# Symlink Cleaner
+
 Symlink Cleaner is a Python-based utility crafted to maintain symbolic links in a Zurg-powered media ecosystem. It’s designed for users managing extensive media libraries with tools like Radarr and Sonarr, where symlinks can break due to file changes in the Zurg mount (e.g., Real-Debrid or similar). The app scans user-defined directories, repairs broken symlinks by finding matching files with the same extension in the original target directory, and optionally removes unrepairable links while notifying Radarr and Sonarr instances to refresh their metadata. With a sleek, Bootstrap-based web UI, real-time updates via WebSockets, and flexible configuration (UI, `config.json`, or env vars), it supports both on-demand and scheduled scans. Docker-ready, it’s perfect for automated media management workflows.
 
 ## Description
