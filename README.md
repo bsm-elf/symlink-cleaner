@@ -98,11 +98,11 @@ Settings are fully configurable through the web UI, `config.json`, or environmen
    - Edit `config.json` with your Zurg host, mount, and Arr API keys.
    - Or use env vars (see below).
 3. **Build and Run**:
-   - ```bash
+   ```bash
    docker build -t symlink-cleaner .
 docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 symlink-cleaner```
    **With env vars:**
-   - ```bash docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 \
+   ```docker run -v ./config.json:/app/config.json -v /storage:/storage -p 5000:5000 \
   -e ZURG_HOST=http://zurg:9999 -e SCAN_INTERVAL=60 -e LOG_LEVEL=debug symlink-cleaner```.
 4. **Verify**: Open `http://localhost:5000`.
 
