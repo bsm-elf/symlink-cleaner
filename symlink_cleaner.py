@@ -33,6 +33,10 @@ def load_config(config_file):
     config['mode'] = env.str('MODE', config['mode'])
     config['log_level'] = env.str('LOG_LEVEL', config['log_level'])
     config['scan_interval'] = env.int('SCAN_INTERVAL', config.get('scan_interval', 0))  # 0 = no schedule
+    # Validate mode
+    valid_modes = ["repair", "repair_and_remove", "repair_and_remove_unused"]
+    if config['mode'] not in valid_modes:
+        raise ValueError(f"Invalid mode: {config['mode']}. Must be one of {valid_modes}")
     return config
 
 def check_zurg_status(zurg_host):
@@ -125,25 +129,35 @@ def clean_symlinks(config):
         socketio.emit('scan_update', scan_results)
         return
     
-    mode = config.get("mode", "repair_and_remove")
+    mode = config.get("mode", "repair")
     for dir_path in config["symlink_dirs"]:
         for root, _, files in os.walk(dir_path):
             for file in files:
                 symlink_path = os.path.join(root, file)
                 if os.path.islink(symlink_path):
-                    repaired, new_target = repair_symlink(symlink_path, config["zurg_mount"])
-                    if repaired and new_target != os.readlink(symlink_path):
-                        scan_results["repaired"].append({"path": symlink_path, "new_target": new_target})
-                    elif not repaired and mode in ["repair_and_remove", "repair_remove_and_clean"]:
-                        os.remove(symlink_path)
-                        notify_arr_instances(config, symlink_path)
-                        scan_results["removed"].append(symlink_path)
-                    else:
+                    target = os.readlink(symlink_path)
+                    if os.path.exists(target):
+                        # Symlink is valid
                         scan_results["valid"] += 1
+                    else:
+                        # Symlink is broken
+                        repaired, new_target = repair_symlink(symlink_path, config["zurg_mount"])
+                        if repaired and new_target != os.readlink(symlink_path):
+                            # Symlink was repaired
+                            scan_results["repaired"].append({"path": symlink_path, "new_target": new_target})
+                        elif not repaired and mode in ["repair_and_remove", "repair_and_remove_unused"]:
+                            # Remove unrepairable symlinks in repair_and_remove or repair_and_remove_unused modes
+                            os.remove(symlink_path)
+                            notify_arr_instances(config, symlink_path)
+                            scan_results["removed"].append(symlink_path)
+                            logger.info(f"Removed unrepairable symlink: {symlink_path}")
+                        else:
+                            # In repair mode, leave unrepairable symlinks alone
+                            logger.info(f"Symlink {symlink_path} could not be repaired and was left as-is")
                     socketio.emit('scan_update', scan_results)
     
-    # If mode is repair_remove_and_clean, delete spare files in Zurg directory
-    if mode == "repair_remove_and_clean":
+    # If mode is repair_and_remove_unused, delete spare files in Zurg directory
+    if mode == "repair_and_remove_unused":
         scan_results["cleaned"] = clean_spare_files(config)
     
     scan_results["status"] = "complete"
