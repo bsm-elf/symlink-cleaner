@@ -21,4 +21,4 @@ EXPOSE 5000
 USER appuser
 
 # Command to run the app with gunicorn and eventlet
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:5000", "symlink_cleaner:app"]
+CMD ["gunicorn", "--worker-class", "eventlet", "-w", "3", "--timeout", "120", "--bind", "0.0.0.0:5000", "symlink_cleaner:app"]
