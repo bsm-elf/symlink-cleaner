@@ -222,9 +222,14 @@ def handle_scan():
     threading.Thread(target=clean_symlinks, args=(config_global,)).start()
 
 @socketio.on('connect')
-def handle_connect(auth=None):  # Fix: accept optional parameter to avoid positional argument errors
+def handle_connect(auth=None):  # Accept auth as an optional parameter
+    global config_global
+    # Ensure config_global is loaded
+    if "zurg_host" not in config_global:
+        config_global = load_config(app.config.get('config_file', 'config.json'))
     check_zurg_status(config_global["zurg_host"])
     emit('scan_update', scan_results)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Symlink Cleaner for Zurg")
