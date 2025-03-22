@@ -2,41 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Symlink Cleaner</title>
+  <!-- Google Fonts for a modern look -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .status-up { color: #28a745; }
-    .status-down { color: #dc3545; }
-    .card { margin-bottom: 20px; }
-    .table { font-size: 0.9rem; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f4f7f9;
+    }
+    /* Gradient header styling */
+    .navbar {
+      background: linear-gradient(90deg, #007bff, #00c6ff);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .card {
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .card-header {
+      background-color: #ffffff;
+      border-bottom: none;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+    .card-body {
+      background-color: #ffffff;
+    }
+    /* Table styling */
+    .table thead th {
+      background-color: #007bff;
+      color: #ffffff;
+    }
+    .status-up {
+      color: #28a745;
+      font-weight: bold;
+    }
+    .status-down {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    /* Button styling */
+    .btn-primary, .btn-secondary, .btn-success {
+      border-radius: 20px;
+    }
+    /* Form styling */
+    .form-control, .form-select {
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-dark bg-dark">
-    <div class="container-fluid">
+  <nav class="navbar navbar-dark">
+    <div class="container-fluid d-flex align-items-center">
+      <!-- Logo -->
+      <img src="symlink_cleaner_logo.png" alt="Symlink Cleaner Logo" style="height: 40px; margin-right: 10px;">
       <span class="navbar-brand mb-0 h1">Symlink Cleaner</span>
     </div>
   </nav>
 
   <div class="container mt-4">
     <div class="row">
+      <!-- Left Column: Status & Actions -->
       <div class="col-md-4">
         <div class="card">
           <div class="card-header">Status</div>
           <div class="card-body">
-            <p>Zurg: <span id="zurgStatus" class="status-{{ 'up' if initial_status == 'Up' else 'down' }}">{{ initial_status }}</span></p>
+            <p>Zurg: <span id="zurgStatus" class="status-up">Up</span></p>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">Actions</div>
           <div class="card-body">
-            <button class="btn btn-primary" onclick="startScan()">Run Scan</button>
+            <button class="btn btn-primary w-100" onclick="startScan()">Run Scan</button>
           </div>
         </div>
       </div>
 
+      <!-- Right Column: Configuration -->
       <div class="col-md-8">
         <div class="card">
           <div class="card-header">Configuration</div>
@@ -55,162 +107,4 @@
                 <input type="text" class="form-control" name="symlink_dirs" required>
               </div>
               <div class="mb-3">
-                <label class="form-label">Mode</label>
-                <select class="form-select" name="mode">
-                  <option value="repair">Repair Broken Symlinks</option>
-                  <option value="repair_and_remove">Repair and Remove Broken Symlinks</option>
-                  <option value="repair_and_remove_unused">Repair, Remove, and Delete Unused Zurg Files</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Scan Interval (minutes, 0 to disable)</label>
-                <input type="number" class="form-control" name="scan_interval" min="0" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Log Level</label>
-                <select class="form-select" name="log_level">
-                  <option value="debug">Debug</option>
-                  <option value="info">Info</option>
-                  <option value="warning">Warning</option>
-                  <option value="error">Error</option>
-                </select>
-              </div>
-              <h5>Radarr Instances</h5>
-              <div id="radarrFields" class="mb-3"></div>
-              <button type="button" class="btn btn-secondary mb-3" onclick="addInstance('radarr')">Add Radarr</button>
-              <h5>Sonarr Instances</h5>
-              <div id="sonarrFields" class="mb-3"></div>
-              <button type="button" class="btn btn-secondary mb-3" onclick="addInstance('sonarr')">Add Sonarr</button>
-              <button type="submit" class="btn btn-success">Save Config</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">Scan Results</div>
-          <div class="card-body">
-            <p>Repaired Symlinks: <span id="repairedCount">0</span></p>
-            <table class="table table-striped">
-              <thead><tr><th>Path</th><th>New Target</th></tr></thead>
-              <tbody id="repairedTable"></tbody>
-            </table>
-            <p>Removed Symlinks: <span id="removedCount">0</span></p>
-            <table class="table table-striped">
-              <thead><tr><th>Path</th></tr></thead>
-              <tbody id="removedTable"></tbody>
-            </table>
-            <p>Valid Symlinks: <span id="validCount">0</span></p>
-            <p id="scanStatus">Status: Idle</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
-  <script>
-    const socket = io();
-
-    function addInstance(type) {
-      const container = document.getElementById(`${type}Fields`);
-      const div = document.createElement('div');
-      div.className = 'input-group mb-2';
-      div.innerHTML = `
-        <input type="text" class="form-control" name="${type}_name[]" placeholder="Name" required>
-        <input type="text" class="form-control" name="${type}_host[]" placeholder="Host" required>
-        <input type="text" class="form-control" name="${type}_api_key[]" placeholder="API Key" required>
-        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-      `;
-      container.appendChild(div);
-    }
-
-    fetch('/config').then(r => r.json()).then(data => {
-      document.querySelector('[name="zurg_host"]').value = data.zurg_host;
-      document.querySelector('[name="zurg_mount"]').value = data.zurg_mount;
-      document.querySelector('[name="symlink_dirs"]').value = data.symlink_dirs.join(', ');
-      document.querySelector('[name="mode"]').value = data.mode;
-      document.querySelector('[name="scan_interval"]').value = data.scan_interval;
-      document.querySelector('[name="log_level"]').value = data.log_level;
-      data.radarr_instances.forEach(inst => {
-        addInstance('radarr');
-        const fields = document.querySelectorAll('#radarrFields .input-group:last-child input');
-        fields[0].value = inst.name;
-        fields[1].value = inst.host;
-        fields[2].value = inst.api_key;
-      });
-      data.sonarr_instances.forEach(inst => {
-        addInstance('sonarr');
-        const fields = document.querySelectorAll('#sonarrFields .input-group:last-child input');
-        fields[0].value = inst.name;
-        fields[1].value = inst.host;
-        fields[2].value = inst.api_key;
-      });
-    });
-
-    document.getElementById('configForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const config = {
-        zurg_host: formData.get('zurg_host'),
-        zurg_mount: formData.get('zurg_mount'),
-        symlink_dirs: formData.get('symlink_dirs').split(',').map(s => s.trim()),
-        mode: formData.get('mode'),
-        scan_interval: parseInt(formData.get('scan_interval')),
-        log_level: formData.get('log_level'),
-        radarr_instances: [],
-        sonarr_instances: []
-      };
-      const radarrNames = formData.getAll('radarr_name[]');
-      const radarrHosts = formData.getAll('radarr_host[]');
-      const radarrKeys = formData.getAll('radarr_api_key[]');
-      for (let i = 0; i < radarrNames.length; i++) {
-        config.radarr_instances.push({ name: radarrNames[i], host: radarrHosts[i], api_key: radarrKeys[i] });
-      }
-      const sonarrNames = formData.getAll('sonarr_name[]');
-      const sonarrHosts = formData.getAll('sonarr_host[]');
-      const sonarrKeys = formData.getAll('sonarr_api_key[]');
-      for (let i = 0; i < sonarrNames.length; i++) {
-        config.sonarr_instances.push({ name: sonarrNames[i], host: sonarrHosts[i], api_key: sonarrKeys[i] });
-      }
-      await fetch('/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
-      alert('Config saved! Restart the app to apply scheduling changes.');
-    };
-
-    function startScan() {
-      socket.emit('start_scan');
-    }
-
-    socket.on('zurg_status', data => {
-      const statusEl = document.getElementById('zurgStatus');
-      statusEl.textContent = data.status;
-      statusEl.className = `status-${data.status === 'Up' ? 'up' : 'down'}`;
-    });
-
-    socket.on('scan_update', data => {
-      document.getElementById('repairedCount').textContent = data.repaired.length;
-      const repairedTable = document.getElementById('repairedTable');
-      repairedTable.innerHTML = '';
-      data.repaired.forEach(r => {
-        repairedTable.innerHTML += `<tr><td>${r.path}</td><td>${r.new_target}</td></tr>`;
-      });
-      document.getElementById('removedCount').textContent = data.removed.length;
-      const removedTable = document.getElementById('removedTable');
-      removedTable.innerHTML = '';
-      data.removed.forEach(r => {
-        removedTable.innerHTML += `<tr><td>${r}</td></tr>`;
-      });
-      document.getElementById('validCount').textContent = data.valid;
-      document.getElementById('scanStatus').textContent = `Status: ${data.status === 'zurg_down' ? 'Zurg Down' : data.status.charAt(0).toUpperCase() + data.status.slice(1)}`;
-    });
-  </script>
-</body>
-</html>
+                <label class="form-label">Mode
