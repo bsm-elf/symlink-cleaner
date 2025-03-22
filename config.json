@@ -1,5 +1,5 @@
 {
-  "zurg_host": "http://localhost:9999",
+  "zurg_host": "http://zurg-service:9999",
   "zurg_mount": "/storage/realdebrid-zurg/__all__",
   "symlink_dirs": [
     "/storage/symlinks/anime_movies",
@@ -9,9 +9,12 @@
     "/storage/symlinks/series",
     "/storage/symlinks/series-4k"
   ],
+
   "mode": "repair",
   "scan_interval": 0,
-  "log_level": "info",
+  "log_level": "INFO",
+  "dry_run": false,
+
   "radarr_instances": [
     {
       "name": "Radarr",
